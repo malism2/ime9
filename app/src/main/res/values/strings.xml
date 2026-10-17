@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">IME9</string>
+    <string name="ime_name">IME9 Keyboard</string>
+    <string name="subtype_zh">Simplified Chinese</string>
+    <string name="subtype_en">English</string>
+    <string name="setup_title">IME9 Offline Keyboard</string>
+    <string name="setup_body">IME9 supports English QWERTY, Simplified Chinese 26-key and T9 Pinyin, punctuation, and association — all offline, no emoji.\n\n1. Tap below to open system keyboard settings\n2. Enable “IME9 Keyboard”\n3. Switch to IME9 in a text field</string>
+    <string name="setup_open">Open keyboard settings</string>
+    <string name="setup_picker">Choose keyboard</string>
+</resources>

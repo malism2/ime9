@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">IME9</string>
+    <string name="ime_name">IME9 输入法</string>
+    <string name="subtype_zh">简体中文</string>
+    <string name="subtype_en">English</string>
+    <string name="setup_title">IME9 离线输入法</string>
+    <string name="setup_body">本输入法支持英文 QWERTY、简体中文 26 键与九宫格拼音、标点与联想，全部离线工作，不含表情。\n\n1. 点下方按钮打开系统输入法设置\n2. 启用「IME9 输入法」\n3. 在输入框中切换到 IME9</string>
+    <string name="setup_open">打开输入法设置</string>
+    <string name="setup_picker">选择输入法</string>
+</resources>

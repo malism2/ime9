@@ -1,0 +1,4 @@
+<resources>
+    <dimen name="ime_bottom_padding">6dp</dimen>
+    <dimen name="setup_padding">24dp</dimen>
+</resources>

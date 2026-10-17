@@ -1,0 +1,14 @@
+<resources>
+    <color name="ime_bg">#FFD8D8DC</color>
+    <color name="ime_key">#FFFFFFFF</color>
+    <color name="ime_key_pressed">#FFE8E8ED</color>
+    <color name="ime_key_special">#FFB5B8C0</color>
+    <color name="ime_text">#FF111111</color>
+    <color name="ime_on_enter">#FFFFFFFF</color>
+    <color name="ime_hint">#FF6C6C70</color>
+    <color name="ime_accent">#FF07C160</color>
+    <color name="ime_candidate_bg">#FFD8D8DC</color>
+    <color name="ime_candidate_divider">#FFC5C5C8</color>
+    <color name="setup_bg">#FF111113</color>
+    <color name="setup_text">#FFFFFFFF</color>
+</resources>

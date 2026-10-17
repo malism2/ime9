@@ -1,0 +1,1 @@
+-keep class com.malism.ime9.Input9ImeService { *; }

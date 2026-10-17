@@ -1,0 +1,9 @@
+<resources>
+    <style name="Theme.Ime9.InputMethod" parent="@android:style/Theme.DeviceDefault.InputMethod">
+        <item name="android:navigationBarColor">@color/ime_bg</item>
+        <item name="android:windowBackground">@color/ime_bg</item>
+        <item name="android:colorBackground">@color/ime_bg</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+</resources>
