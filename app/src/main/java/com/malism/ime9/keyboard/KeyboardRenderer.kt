@@ -21,7 +21,8 @@ class KeyboardRenderer(
     private val onAction: (KeyAction) -> Unit,
     private val onLongText: (String) -> Unit,
 ) {
-    fun render(spec: KeyboardSpec) {
+    fun render(spec: KeyboardSpec, rtl: Boolean = false) {
+        host.layoutDirection = if (rtl) View.LAYOUT_DIRECTION_RTL else View.LAYOUT_DIRECTION_LTR
         host.removeAllViews()
         when (spec) {
             is KeyboardSpec.Grid -> renderGrid(spec)

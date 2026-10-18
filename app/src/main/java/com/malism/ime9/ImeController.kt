@@ -8,6 +8,7 @@ import android.widget.TextView
 import com.malism.ime9.R
 import com.malism.ime9.engine.Candidate
 import com.malism.ime9.engine.InputEngine
+import com.malism.ime9.engine.Romaji
 import com.malism.ime9.keyboard.ChineseLayout
 import com.malism.ime9.keyboard.KeyAction
 import com.malism.ime9.keyboard.KeyboardLayouts
@@ -71,14 +72,7 @@ class ImeController(
         return languageFromTag(langTag) ?: LanguageMode.English
     }
 
-    private fun languageFromTag(tag: String?): LanguageMode? {
-        val lang = tag?.lowercase()?.substringBefore('-')?.substringBefore('_') ?: return null
-        return when (lang) {
-            "zh" -> LanguageMode.Chinese
-            "en" -> LanguageMode.English
-            else -> null
-        }
-    }
+    private fun languageFromTag(tag: String?): LanguageMode? = LanguageMode.fromTag(tag)
 
     fun finish() {
         commitRawIfNeeded()
@@ -101,11 +95,7 @@ class ImeController(
             KeyAction.Enter -> onEnter()
             KeyAction.Language -> {
                 if (numberPad.locked) return
-                commitRawIfNeeded()
-                language = if (language == LanguageMode.Chinese) LanguageMode.English else LanguageMode.Chinese
-                page = KeyboardPage.Letters
-                shift = false
-                refresh()
+                switchLanguage(language.next())
             }
             KeyAction.LayoutToggle -> {
                 if (numberPad.locked) return
@@ -147,13 +137,34 @@ class ImeController(
     }
 
     fun onLongLetter(text: String) {
-        if (text.length == 1 && text[0] in 'a'..'z') {
-            composing.append(text)
-            associating = false
-            updateCandidatesFromComposing()
+        val picked = LanguageMode.entries.find { it.label == text }
+        if (picked != null) {
+            if (!numberPad.locked) switchLanguage(picked)
+            return
+        }
+        if (text.length == 1 && text[0].isLetter()) {
+            val ch = text[0]
+            if (language == LanguageMode.Chinese && ch in 'a'..'z') {
+                composing.append(ch)
+                associating = false
+                updateCandidatesFromComposing()
+            } else if (language != LanguageMode.Chinese) {
+                onLetter(ch)
+            } else {
+                commitDirect(text)
+            }
         } else {
             commitDirect(text)
         }
+    }
+
+    private fun switchLanguage(next: LanguageMode) {
+        if (next == language) return
+        commitRawIfNeeded()
+        language = next
+        page = KeyboardPage.Letters
+        shift = false
+        refresh()
     }
 
     fun pickCandidate(index: Int) {
@@ -204,13 +215,11 @@ class ImeController(
     private fun onSpace() {
         if (composing.isNotEmpty()) {
             val first = candidates.firstOrNull()
-            if (first != null && language == LanguageMode.Chinese) {
+            if (convertsOnSpace && first != null) {
                 commitText(first.text)
-            } else if (language == LanguageMode.English) {
-                commitText(composing.toString())
-                commitDirect(" ")
             } else {
                 commitText(composing.toString())
+                commitDirect(" ")
             }
         } else {
             commitDirect(" ")
@@ -248,7 +257,7 @@ class ImeController(
     private fun commitRawIfNeeded() {
         if (composing.isEmpty()) return
         val first = candidates.firstOrNull()
-        if (language == LanguageMode.Chinese && first != null) {
+        if (convertsOnSpace && first != null) {
             connection()?.commitText(first.text, 1)
             lastCommit = first.text
         } else {
@@ -270,15 +279,19 @@ class ImeController(
     private fun updateCandidatesFromComposing() {
         val ic = connection()
         val raw = composing.toString()
-        candidates = if (language == LanguageMode.Chinese) {
-            engine.chineseCandidates(raw)
-        } else {
-            engine.englishCandidates(raw, shift)
+        candidates = when (language) {
+            LanguageMode.Chinese -> engine.chineseCandidates(raw)
+            LanguageMode.English -> engine.englishCandidates(raw, shift)
+            LanguageMode.Spanish -> engine.spanishCandidates(raw, shift)
+            LanguageMode.German -> engine.germanCandidates(raw, shift)
+            LanguageMode.Russian -> engine.russianCandidates(raw, shift)
+            LanguageMode.Arabic -> engine.arabicCandidates(raw)
+            LanguageMode.Japanese -> engine.japaneseCandidates(raw)
         }
-        val shown = if (language == LanguageMode.Chinese) {
-            engine.pinyin.displayComposing(raw, candidates.firstOrNull()?.hint)
-        } else {
-            raw
+        val shown = when (language) {
+            LanguageMode.Chinese -> engine.pinyin.displayComposing(raw, candidates.firstOrNull()?.hint)
+            LanguageMode.Japanese -> Romaji.toHiragana(raw)
+            else -> raw
         }
         ic?.setComposingText(shown, 1)
         composingView.text = shown
@@ -288,7 +301,15 @@ class ImeController(
     private fun showAssociation() {
         connection()?.finishComposingText()
         composingView.text = ""
-        candidates = engine.associate(lastCommit, language == LanguageMode.Chinese)
+        candidates = when (language) {
+            LanguageMode.Chinese -> engine.associate(lastCommit, chinese = true)
+            LanguageMode.English -> engine.associate(lastCommit, chinese = false)
+            LanguageMode.Spanish -> engine.associateEs(lastCommit)
+            LanguageMode.German -> engine.associateDe(lastCommit)
+            LanguageMode.Russian -> engine.associateRu(lastCommit)
+            LanguageMode.Arabic -> engine.associateAr(lastCommit)
+            LanguageMode.Japanese -> engine.associateJa(lastCommit)
+        }
         renderCandidates()
     }
 
@@ -309,8 +330,22 @@ class ImeController(
     private fun renderKeyboard() {
         renderer.render(
             KeyboardLayouts.current(page, language, chineseLayout, shift, numberPad),
+            rtl = language.rtl && page != KeyboardPage.Numbers,
         )
+        applyDirection()
         updateLayoutToggle()
+    }
+
+    private val convertsOnSpace: Boolean
+        get() = language == LanguageMode.Chinese || language == LanguageMode.Japanese
+
+    private fun applyDirection() {
+        val rtl = language.rtl
+        val dir = if (rtl) View.LAYOUT_DIRECTION_RTL else View.LAYOUT_DIRECTION_LTR
+        val textDir = if (rtl) View.TEXT_DIRECTION_RTL else View.TEXT_DIRECTION_LTR
+        (composingView.parent as? View)?.layoutDirection = dir
+        composingView.textDirection = textDir
+        candidateBar.layoutDirection = dir
     }
 
     private fun updateLayoutToggle() {

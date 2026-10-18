@@ -10,5 +10,6 @@
     <color name="ime_candidate_bg">#FFD8D8DC</color>
     <color name="ime_candidate_divider">#FFC5C5C8</color>
     <color name="setup_bg">#FF111113</color>
+    <color name="ic_launcher_background">#FF07C160</color>
     <color name="setup_text">#FFFFFFFF</color>
 </resources>

@@ -1,0 +1,52 @@
+hola	20000
+gracias	18000
+por	17000
+favor	16000
+sí	15000	si
+no	14000
+buenos	13000
+días	12500	dias
+tardes	12000
+noches	11500
+cómo	11000	como
+estás	10500	estas
+yo	10000
+tú	9800	tu
+nosotros	9600
+qué	9400	que
+dónde	9200	donde
+cuándo	9000	cuando
+porqué	8800	porque
+bien	8600
+mal	8400
+español	8200
+palabra	8000
+hoy	7800
+mañana	7600	manana
+ayer	7400
+amigo	7200
+amiga	7000
+familia	6800
+amor	6600
+agua	6400
+casa	6200
+trabajo	6000
+tiempo	5800
+idioma	5600
+teclado	5400
+niño	5200	nino
+niña	5000	nina
+señor	4800	senor
+señora	4600	senora
+corazón	4400	corazon
+por favor	4200
+buenos días	4000	buenos dias
+muchas	3800
+nombre	3600
+mensaje	3400
+ayuda	3200
+adiós	3000	adios
+también	2800	tambien
+porque	2600
+siempre	2400
+nunca	2200

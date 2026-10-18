@@ -111,6 +111,16 @@ class Input9ImeService : InputMethodService() {
             enLines = lines("en.txt"),
             assocZhLines = lines("assoc_zh.txt"),
             assocEnLines = lines("assoc_en.txt"),
+            esLines = lines("es.txt"),
+            deLines = lines("de.txt"),
+            ruLines = lines("ru.txt"),
+            arLines = lines("ar.txt"),
+            jaLines = lines("ja.txt"),
+            assocEsLines = lines("assoc_es.txt"),
+            assocDeLines = lines("assoc_de.txt"),
+            assocRuLines = lines("assoc_ru.txt"),
+            assocArLines = lines("assoc_ar.txt"),
+            assocJaLines = lines("assoc_ja.txt"),
         )
     }
 }

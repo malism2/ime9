@@ -14,4 +14,32 @@
         android:imeSubtypeExtraValue="AsciiCapable,SupportTouchPositionCorrection"
         android:isAsciiCapable="true"
         android:label="@string/subtype_zh" />
+    <subtype
+        android:imeSubtypeLocale="ar"
+        android:imeSubtypeMode="keyboard"
+        android:imeSubtypeExtraValue="SupportTouchPositionCorrection"
+        android:label="@string/subtype_ar" />
+    <subtype
+        android:imeSubtypeLocale="es_ES"
+        android:imeSubtypeMode="keyboard"
+        android:imeSubtypeExtraValue="AsciiCapable,SupportTouchPositionCorrection"
+        android:isAsciiCapable="true"
+        android:label="@string/subtype_es" />
+    <subtype
+        android:imeSubtypeLocale="ja_JP"
+        android:imeSubtypeMode="keyboard"
+        android:imeSubtypeExtraValue="AsciiCapable,SupportTouchPositionCorrection"
+        android:isAsciiCapable="true"
+        android:label="@string/subtype_ja" />
+    <subtype
+        android:imeSubtypeLocale="de_DE"
+        android:imeSubtypeMode="keyboard"
+        android:imeSubtypeExtraValue="AsciiCapable,SupportTouchPositionCorrection"
+        android:isAsciiCapable="true"
+        android:label="@string/subtype_de" />
+    <subtype
+        android:imeSubtypeLocale="ru_RU"
+        android:imeSubtypeMode="keyboard"
+        android:imeSubtypeExtraValue="SupportTouchPositionCorrection"
+        android:label="@string/subtype_ru" />
 </input-method>

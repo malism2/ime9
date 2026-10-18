@@ -1,0 +1,12 @@
+hola	qué	5000
+hola	cómo	4000
+buenos	días	6000
+buenas	tardes	4000
+buenas	noches	3800
+por	favor	7000
+muchas	gracias	6500
+gracias	por	3000
+cómo	estás	5000
+muy	bien	4000
+de	nada	3500
+niño	pequeño	1000

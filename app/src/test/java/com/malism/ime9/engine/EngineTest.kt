@@ -97,6 +97,54 @@ class EngineTest {
         assertTrue(hits.contains("am"))
     }
 
+    @Test
+    fun spanishFoldFindsNino() {
+        val hits = engine.spanishCandidates("nino", shift = false).map { it.text }
+        assertTrue(hits.contains("niño"))
+    }
+
+    @Test
+    fun spanishShiftCapitalizes() {
+        val hits = engine.spanishCandidates("Hola", shift = true).map { it.text }
+        assertTrue(hits.contains("Hola"))
+    }
+
+    @Test
+    fun germanFoldFindsStrasse() {
+        val hits = engine.germanCandidates("stras", shift = false).map { it.text }
+        assertTrue(hits.contains("straße"))
+    }
+
+    @Test
+    fun russianPrefix() {
+        val hits = engine.russianCandidates("прив", shift = false).map { it.text }
+        assertEquals("привет", hits.first())
+    }
+
+    @Test
+    fun arabicPrefixAndAssociation() {
+        val hits = engine.arabicCandidates("مرح").map { it.text }
+        assertTrue(hits.contains("مرحبا"))
+        val next = engine.associateAr("مرحبا").map { it.text }
+        assertTrue(next.contains("بك"))
+    }
+
+    @Test
+    fun romajiKonnichiwa() {
+        assertEquals("こんにちわ", Romaji.toHiragana("konnichiwa"))
+        assertEquals("とうきょう", Romaji.toHiragana("toukyou"))
+        assertEquals("がっこう", Romaji.toHiragana("gakkou"))
+    }
+
+    @Test
+    fun japaneseExactAndKana() {
+        val hits = engine.japaneseCandidates("watashi").map { it.text }
+        assertEquals("私", hits.first())
+        assertTrue(hits.contains("わたし"))
+        val hello = engine.japaneseCandidates("konnichiwa").map { it.text }
+        assertEquals("こんにちは", hello.first())
+    }
+
     companion object {
         lateinit var engine: InputEngine
 
@@ -108,7 +156,22 @@ class EngineTest {
                     ?: error("missing dict/$name")
                 return stream.bufferedReader().readLines().asSequence()
             }
-            val lexicon = Lexicon.load(lines("zh.txt"), lines("en.txt"), lines("assoc_zh.txt"), lines("assoc_en.txt"))
+            val lexicon = Lexicon.load(
+                lines("zh.txt"),
+                lines("en.txt"),
+                lines("assoc_zh.txt"),
+                lines("assoc_en.txt"),
+                esLines = lines("es.txt"),
+                deLines = lines("de.txt"),
+                ruLines = lines("ru.txt"),
+                arLines = lines("ar.txt"),
+                jaLines = lines("ja.txt"),
+                assocEsLines = lines("assoc_es.txt"),
+                assocDeLines = lines("assoc_de.txt"),
+                assocRuLines = lines("assoc_ru.txt"),
+                assocArLines = lines("assoc_ar.txt"),
+                assocJaLines = lines("assoc_ja.txt"),
+            )
             engine = InputEngine(lexicon)
         }
     }

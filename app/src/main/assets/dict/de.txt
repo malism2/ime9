@@ -1,0 +1,53 @@
+hallo	20000
+danke	18000
+bitte	17000
+ja	16000
+nein	15000
+guten	14000
+morgen	13500
+tag	13000
+abend	12500
+wie	12000
+geht	11500
+ich	11000
+du	10500
+wir	10000
+und	9800
+der	9600
+die	9400
+das	9200
+nicht	9000
+ein	8800
+eine	8600
+ist	8400
+sind	8200
+für	8000	fuer
+mit	7800
+auf	7600
+deutsch	7400
+wort	7200
+heute	7000
+straße	6800	strasse
+schön	6600	schoen
+gut	6400
+wasser	6200
+haus	6000
+arbeit	5800
+zeit	5600
+sprache	5400
+tastatur	5200
+grüße	5000	gruesse
+name	4800
+nachricht	4600
+hilfe	4400
+tschüss	4200	tschuess
+auch	4000
+immer	3800
+nie	3600
+freund	3400
+familie	3200
+liebe	3000
+über	2800	ueber
+können	2600	koennen
+möchten	2400	moechten
+größe	2200	groesse

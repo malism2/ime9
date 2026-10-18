@@ -1,0 +1,11 @@
+guten	morgen	6000
+guten	tag	5500
+guten	abend	5000
+wie	geht	4500
+geht	es	4000
+danke	schön	3500
+bitte	schön	3000
+ich	bin	4000
+auf	wiedersehen	2000
+für	dich	1500
+die	straße	1200
