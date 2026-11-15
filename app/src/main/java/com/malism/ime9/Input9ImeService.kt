@@ -41,7 +41,8 @@ class Input9ImeService : InputMethodService() {
         )
         val composingView = view.findViewById<TextView>(R.id.composing_view)
         val candidateBar = view.findViewById<LinearLayout>(R.id.candidate_bar)
-        val layoutToggle = view.findViewById<TextView>(R.id.layout_toggle)
+        val moreButton = view.findViewById<TextView>(R.id.more_candidates)
+        val candidatePanel = view.findViewById<LinearLayout>(R.id.candidate_panel)
         val host = view.findViewById<LinearLayout>(R.id.keyboard_host)
         lateinit var ctrl: ImeController
         val renderer = KeyboardRenderer(
@@ -54,7 +55,8 @@ class Input9ImeService : InputMethodService() {
             engine = engine,
             composingView = composingView,
             candidateBar = candidateBar,
-            layoutToggle = layoutToggle,
+            moreButton = moreButton,
+            candidatePanel = candidatePanel,
             renderer = renderer,
             connection = { currentInputConnection },
         )

@@ -79,4 +79,11 @@ object PinyinSyllables {
     }
 
     fun display(input: String): String = segmentLoose(input).joinToString("'")
+
+    /** Every token is a full syllable, otherwise null. */
+    fun segmentComplete(input: String): List<String>? {
+        val parts = segmentLoose(input)
+        if (parts.isEmpty() || parts.any { it !in all }) return null
+        return parts
+    }
 }

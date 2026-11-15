@@ -40,7 +40,6 @@ sealed class KeyAction {
     data object Numbers : KeyAction()
     data object Letters : KeyAction()
     data object Separator : KeyAction()
-    data object Clear : KeyAction()
 }
 
 data class KeyDef(
@@ -108,7 +107,15 @@ object KeyboardLayouts {
         rows += qwertyRows[0].map { letter(it) }
         rows += indented(qwertyRows[1])
         rows += listOf(symKey(LanguageMode.Chinese, weight = 1.4f)) + qwertyRows[2].map { letter(it) } + listOf(delKey(1.4f))
-        rows += bottom(LanguageMode.Chinese)
+        rows += listOf(
+            KeyDef("九宫", KeyAction.LayoutToggle, style = KeyStyle.Special, weight = 1.15f),
+            KeyDef("123", KeyAction.Numbers, style = KeyStyle.Special, weight = 1.05f),
+            KeyDef("中", KeyAction.Language, style = KeyStyle.Special, weight = 0.95f, longPress = languageLabels()),
+            KeyDef("，", KeyAction.Text("，"), weight = 0.85f),
+            KeyDef("空格", KeyAction.Space, weight = 2.15f),
+            KeyDef("。", KeyAction.Text("。"), weight = 0.85f),
+            enterKey(LanguageMode.Chinese, weight = 1.15f),
+        )
         return KeyboardSpec.Grid(rows, rowHeightDp = 48)
     }
 
@@ -173,7 +180,7 @@ object KeyboardLayouts {
         )
         return KeyboardSpec.WeChatT9(
             left = listOf(
-                KeyDef("重输", KeyAction.Clear, style = KeyStyle.Special),
+                KeyDef("26键", KeyAction.LayoutToggle, style = KeyStyle.Special),
                 KeyDef("符", KeyAction.Symbols, style = KeyStyle.Special),
                 KeyDef("123", KeyAction.Numbers, style = KeyStyle.Special),
                 KeyDef("中", KeyAction.Language, style = KeyStyle.Special, longPress = languageLabels()),

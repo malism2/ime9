@@ -33,6 +33,18 @@ class LanguageLayoutTest {
     }
 
     @Test
+    fun chineseT9UsesLayoutToggleInsteadOfClear() {
+        val t9 = KeyboardLayouts.chineseT9()
+        assertEquals("26键", t9.left.first().label)
+        assertEquals(KeyAction.LayoutToggle, t9.left.first().action)
+        assertTrue(t9.left.none { it.label == "重输" })
+        val qwerty = KeyboardLayouts.chineseQwerty()
+        val bottom = qwerty.rows.last()
+        assertEquals("九宫", bottom.first().label)
+        assertEquals(KeyAction.LayoutToggle, bottom.first().action)
+    }
+
+    @Test
     fun germanIsQwertzAndRussianHasYo() {
         val de = KeyboardLayouts.current(
             KeyboardPage.Letters,

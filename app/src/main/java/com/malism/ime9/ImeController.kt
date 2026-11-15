@@ -1,5 +1,7 @@
 package com.malism.ime9
 
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
@@ -21,7 +23,8 @@ class ImeController(
     private val engine: InputEngine,
     private val composingView: TextView,
     private val candidateBar: LinearLayout,
-    private val layoutToggle: TextView,
+    private val moreButton: TextView,
+    private val candidatePanel: LinearLayout,
     private val renderer: KeyboardRenderer,
     private val connection: () -> InputConnection?,
 ) {
@@ -40,9 +43,13 @@ class ImeController(
     private var associating = false
     private var numberPad = NumberPadMode.Optional
     private var languageInitialized = false
+    private var candidatesExpanded = false
+    private var candidatePage = 0
 
     fun start(info: EditorInfo?, subtypeLanguageTag: String? = null) {
         composing.setLength(0)
+        candidatesExpanded = false
+        candidatePage = 0
         associating = false
         lastCommit = ""
         if (!languageInitialized) {
@@ -78,6 +85,7 @@ class ImeController(
         commitRawIfNeeded()
         composing.setLength(0)
         candidates = emptyList()
+        candidatesExpanded = false
         associating = false
     }
 
@@ -126,13 +134,6 @@ class ImeController(
                     commitDirect("，")
                 }
             }
-            KeyAction.Clear -> {
-                composing.setLength(0)
-                connection()?.finishComposingText()
-                lastCommit = ""
-                associating = true
-                showAssociation()
-            }
         }
     }
 
@@ -169,7 +170,28 @@ class ImeController(
 
     fun pickCandidate(index: Int) {
         val item = candidates.getOrNull(index) ?: return
-        commitText(item.text)
+        val keepOpen = candidatesExpanded
+        candidatesExpanded = false
+        val raw = composing.toString()
+        val rest = if (language == LanguageMode.Chinese && raw.isNotEmpty()) {
+            engine.pinyin.remaining(raw, item.hint)
+        } else {
+            ""
+        }
+        if (rest.isNotEmpty()) {
+            val ic = connection() ?: return
+            ic.commitText(item.text, 1)
+            composing.setLength(0)
+            composing.append(rest)
+            lastCommit = item.text
+            associating = false
+            updateCandidatesFromComposing()
+        } else {
+            commitText(item.text)
+        }
+        candidatesExpanded = keepOpen && candidates.isNotEmpty()
+        candidatePage = 0
+        updateCandidateChrome()
     }
 
     private fun onLetter(ch: Char) {
@@ -216,7 +238,7 @@ class ImeController(
         if (composing.isNotEmpty()) {
             val first = candidates.firstOrNull()
             if (convertsOnSpace && first != null) {
-                commitText(first.text)
+                pickCandidate(0)
             } else {
                 commitText(composing.toString())
                 commitDirect(" ")
@@ -258,7 +280,14 @@ class ImeController(
         if (composing.isEmpty()) return
         val first = candidates.firstOrNull()
         if (convertsOnSpace && first != null) {
-            connection()?.commitText(first.text, 1)
+            val ic = connection()
+            if (language == LanguageMode.Chinese) {
+                val rest = engine.pinyin.remaining(composing.toString(), first.hint)
+                ic?.commitText(first.text, 1)
+                if (rest.isNotEmpty()) ic?.commitText(rest, 1)
+            } else {
+                ic?.commitText(first.text, 1)
+            }
             lastCommit = first.text
         } else {
             connection()?.commitText(composing.toString(), 1)
@@ -315,6 +344,8 @@ class ImeController(
 
     private fun refresh() {
         composing.setLength(0)
+        candidatesExpanded = false
+        candidatePage = 0
         connection()?.finishComposingText()
         composingView.text = ""
         associating = !numberPad.locked
@@ -333,7 +364,7 @@ class ImeController(
             rtl = language.rtl && page != KeyboardPage.Numbers,
         )
         applyDirection()
-        updateLayoutToggle()
+        updateCandidateChrome()
     }
 
     private val convertsOnSpace: Boolean
@@ -346,18 +377,106 @@ class ImeController(
         (composingView.parent as? View)?.layoutDirection = dir
         composingView.textDirection = textDir
         candidateBar.layoutDirection = dir
+        candidatePanel.layoutDirection = dir
     }
 
-    private fun updateLayoutToggle() {
-        val show = !numberPad.locked && language == LanguageMode.Chinese && page == KeyboardPage.Letters
-        layoutToggle.visibility = if (show) View.VISIBLE else View.GONE
-        layoutToggle.text = if (chineseLayout == ChineseLayout.T9) "26键" else "九宫"
-        layoutToggle.setOnClickListener { handle(KeyAction.LayoutToggle) }
+    private fun updateCandidateChrome() {
+        val showMore = !numberPad.locked && language == LanguageMode.Chinese && page == KeyboardPage.Letters
+        if (!showMore) candidatesExpanded = false
+        if (candidates.isEmpty()) candidatesExpanded = false
+        moreButton.visibility = if (showMore) View.VISIBLE else View.GONE
+        moreButton.text = if (candidatesExpanded) "收起" else "更多"
+        moreButton.alpha = if (candidates.isEmpty()) 0.35f else 1f
+        moreButton.setOnClickListener {
+            if (candidates.isEmpty()) return@setOnClickListener
+            candidatesExpanded = !candidatesExpanded
+            candidatePage = 0
+            updateCandidateChrome()
+        }
+        candidatePanel.visibility = if (candidatesExpanded) View.VISIBLE else View.GONE
+        if (candidatesExpanded) renderCandidatePage() else candidatePanel.removeAllViews()
     }
+
+    private fun renderCandidatePage() {
+        candidatePanel.removeAllViews()
+        val columns = 4
+        val rows = 3
+        val pageSize = columns * rows
+        val pages = ((candidates.size + pageSize - 1) / pageSize).coerceAtLeast(1)
+        if (candidatePage > pages - 1) candidatePage = pages - 1
+        if (candidatePage < 0) candidatePage = 0
+        val start = candidatePage * pageSize
+        val pageItems = candidates.subList(start, minOf(start + pageSize, candidates.size))
+        pageItems.chunked(columns).forEachIndexed { rowIndex, row ->
+            val rowView = LinearLayout(candidatePanel.context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    dp(48),
+                )
+            }
+            row.forEachIndexed { col, candidate ->
+                val index = start + rowIndex * columns + col
+                rowView.addView(candidateCell(candidate.text) { pickCandidate(index) })
+            }
+            candidatePanel.addView(rowView)
+        }
+        if (pages > 1) {
+            val pager = LinearLayout(candidatePanel.context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    dp(44),
+                )
+            }
+            pager.addView(candidateCell("上页", enabled = candidatePage > 0) {
+                if (candidatePage > 0) {
+                    candidatePage--
+                    renderCandidatePage()
+                }
+            })
+            pager.addView(candidateCell("${candidatePage + 1}/$pages", enabled = false) {})
+            pager.addView(candidateCell("下页", enabled = candidatePage < pages - 1) {
+                if (candidatePage < pages - 1) {
+                    candidatePage++
+                    renderCandidatePage()
+                }
+            })
+            candidatePanel.addView(pager)
+        }
+    }
+
+    private fun candidateCell(label: String, enabled: Boolean = true, onClick: () -> Unit): TextView {
+        return TextView(candidatePanel.context).apply {
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f).apply {
+                val m = dp(3)
+                setMargins(m, m, m, m)
+            }
+            gravity = Gravity.CENTER
+            text = label
+            maxLines = 2
+            textSize = when {
+                label.length <= 2 -> 18f
+                label.length <= 4 -> 15f
+                else -> 13f
+            }
+            alpha = if (enabled) 1f else 0.35f
+            setTextColor(context.getColor(R.color.ime_text))
+            setBackgroundResource(R.drawable.bg_key)
+            if (enabled) setOnClickListener { onClick() }
+        }
+    }
+
+    private fun dp(v: Int): Int = TypedValue.applyDimension(
+        TypedValue.COMPLEX_UNIT_DIP,
+        v.toFloat(),
+        candidateBar.resources.displayMetrics,
+    ).toInt()
 
     private fun renderCandidates() {
         candidateBar.removeAllViews()
-        candidates.forEachIndexed { index, candidate ->
+        val barCount = minOf(candidates.size, BAR_LIMIT)
+        for (index in 0 until barCount) {
             if (index > 0) {
                 val divider = View(candidateBar.context).apply {
                     layoutParams = LinearLayout.LayoutParams(2, LinearLayout.LayoutParams.MATCH_PARENT).apply {
@@ -368,6 +487,7 @@ class ImeController(
                 }
                 candidateBar.addView(divider)
             }
+            val candidate = candidates[index]
             val tv = TextView(candidateBar.context).apply {
                 text = candidate.text
                 setPadding(32, 8, 32, 8)
@@ -379,11 +499,20 @@ class ImeController(
         }
         val candidateRow = composingView.parent as? View
         candidateRow?.visibility = if (numberPad.locked) View.GONE else View.VISIBLE
-        if (numberPad.locked) return
+        if (numberPad.locked) {
+            candidatesExpanded = false
+            candidatePanel.visibility = View.GONE
+            return
+        }
         if (!associating && composing.isEmpty()) {
             composingView.visibility = View.GONE
         } else {
             composingView.visibility = if (composing.isEmpty()) View.GONE else View.VISIBLE
         }
+        updateCandidateChrome()
+    }
+
+    private companion object {
+        const val BAR_LIMIT = 8
     }
 }

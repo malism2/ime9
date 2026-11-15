@@ -25,9 +25,22 @@ class Lexicon {
 
     fun addZh(word: String, pinyin: String, freq: Int) {
         val key = pinyin.lowercase().filter { it in 'a'..'z' }
+        if (key.isEmpty() || word.isEmpty()) return
         zh.insert(key, word, freq, key)
         if (word.length == 1) {
             zhHighFreq.add(Candidate(word, freq))
+            return
+        }
+        for (i in 1 until word.length) {
+            addAssocZh(word.substring(0, i), word.substring(i), freq)
+        }
+        val parts = PinyinSyllables.segmentComplete(key) ?: return
+        if (parts.size != word.length) return
+        val pieceFreq = (freq / 2).coerceIn(1, 90)
+        for (i in word.indices) {
+            val py = parts[i]
+            zh.insert(py, word.substring(i, i + 1), pieceFreq, py)
+            zhHighFreq.add(Candidate(word.substring(i, i + 1), pieceFreq))
         }
     }
 
@@ -69,9 +82,25 @@ class Lexicon {
     }
 
     fun freeze() {
-        zhHighFreq.sortByDescending { it.freq }
+        val bestChar = LinkedHashMap<String, Candidate>()
+        for (c in zhHighFreq) {
+            val old = bestChar[c.text]
+            if (old == null || c.freq > old.freq) bestChar[c.text] = c
+        }
+        zhHighFreq.clear()
+        zhHighFreq.addAll(bestChar.values.sortedByDescending { it.freq })
         for (table in listOf(assocZh, assocEn, assocEs, assocDe, assocRu, assocAr, assocJa)) {
-            for (list in table.values) list.sortByDescending { it.second }
+            for (list in table.values) {
+                val merged = LinkedHashMap<String, Int>()
+                for ((text, freq) in list) {
+                    val old = merged[text]
+                    if (old == null || freq > old) merged[text] = freq
+                }
+                list.clear()
+                for ((text, freq) in merged.entries.sortedByDescending { it.value }) {
+                    list.add(text to freq)
+                }
+            }
         }
     }
 

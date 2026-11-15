@@ -65,6 +65,7 @@ captures/
 /.idea/libraries
 .DS_Store
 /captures
+__pycache__
 
 # bugly
 # app/bugly/BuglyUploadLog.txt

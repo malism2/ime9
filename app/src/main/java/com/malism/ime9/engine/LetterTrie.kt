@@ -59,9 +59,9 @@ class LetterTrie {
         return merged.values.toList()
     }
 
-    fun collectT9(digitsOrLetters: String, limit: Int): List<DictEntry> {
+    fun collectT9(digitsOrLetters: String, limit: Int, exactOnly: Boolean = false): List<DictEntry> {
         val found = ArrayList<DictEntry>()
-        walkT9(root, digitsOrLetters, 0, found)
+        walkT9(root, digitsOrLetters, 0, found, exactOnly)
         val merged = LinkedHashMap<String, DictEntry>()
         for (e in found.sortedByDescending { it.freq }) {
             merged.putIfAbsent(e.word, e)
@@ -72,7 +72,7 @@ class LetterTrie {
 
     fun bestT9Letters(digitsOrLetters: String): String? {
         val found = ArrayList<DictEntry>()
-        walkT9(root, digitsOrLetters, 0, found)
+        walkT9(root, digitsOrLetters, 0, found, exactOnly = false)
         val best = found.maxByOrNull { it.freq } ?: return null
         val letters = best.pinyin.lowercase().filter { it in 'a'..'z' }
         val len = digitsOrLetters.count { it in 'a'..'z' || it in '0'..'9' }
@@ -80,16 +80,22 @@ class LetterTrie {
         return letters.take(len)
     }
 
-    private fun walkT9(node: Node, seq: String, index: Int, out: ArrayList<DictEntry>) {
+    private fun walkT9(
+        node: Node,
+        seq: String,
+        index: Int,
+        out: ArrayList<DictEntry>,
+        exactOnly: Boolean,
+    ) {
         if (index == seq.length) {
-            collect(node, out, Int.MAX_VALUE)
+            if (exactOnly) out.addAll(node.entries) else collect(node, out, Int.MAX_VALUE)
             return
         }
         val ch = seq[index]
         val letters = if (ch in '0'..'9') T9Index.lettersFor(ch) else if (ch in 'a'..'z') charArrayOf(ch) else charArrayOf()
         for (letter in letters) {
             val child = node.children[letter - 'a'] ?: continue
-            walkT9(child, seq, index + 1, out)
+            walkT9(child, seq, index + 1, out, exactOnly)
         }
     }
 

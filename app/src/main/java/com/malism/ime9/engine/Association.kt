@@ -1,15 +1,31 @@
 package com.malism.ime9.engine
 
 class Association(private val lexicon: Lexicon) {
-    fun suggest(prev: String, chinese: Boolean, limit: Int = 16): List<Candidate> {
+    fun suggest(prev: String, chinese: Boolean, limit: Int = 48): List<Candidate> {
         if (prev.isEmpty()) {
             return if (chinese) lexicon.zhHighFreq.take(limit) else emptyList()
         }
-        val table = if (chinese) lexicon.assocZh else lexicon.assocEn
-        val key = if (chinese) prev else prev.lowercase()
-        val hits = table[key].orEmpty().take(limit).map { Candidate(it.first, it.second) }
-        if (hits.isNotEmpty()) return hits
-        return if (chinese) lexicon.zhHighFreq.take(limit) else emptyList()
+        if (!chinese) {
+            val hits = lexicon.assocEn[prev.lowercase()].orEmpty().take(limit).map { Candidate(it.first, it.second) }
+            return hits.ifEmpty { emptyList() }
+        }
+        val merged = LinkedHashMap<String, Int>()
+        fun take(key: String, bonus: Int) {
+            if (key.isEmpty()) return
+            for ((text, freq) in lexicon.assocZh[key].orEmpty()) {
+                val score = freq + bonus
+                val old = merged[text]
+                if (old == null || score > old) merged[text] = score
+            }
+        }
+        take(prev, 100_000)
+        if (prev.length >= 3) take(prev.takeLast(2), 10_000)
+        if (prev.length >= 2) take(prev.takeLast(1), 0)
+        if (merged.isEmpty()) return lexicon.zhHighFreq.take(limit)
+        return merged.entries
+            .sortedByDescending { it.value }
+            .take(limit)
+            .map { Candidate(it.key, it.value) }
     }
 
     fun suggestTable(

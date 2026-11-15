@@ -1,9 +1,22 @@
 # -*- coding: utf-8 -*-
 """Generate offline IME dictionaries under app/src/main/assets/dict/."""
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1] / "app" / "src" / "main" / "assets" / "dict"
 ROOT.mkdir(parents=True, exist_ok=True)
+SYLLABLE_SRC = (
+    Path(__file__).resolve().parents[1]
+    / "app"
+    / "src"
+    / "main"
+    / "java"
+    / "com"
+    / "malism"
+    / "ime9"
+    / "engine"
+    / "PinyinSyllables.kt"
+)
 
 # word, pinyin (no separators), freq
 CHARS = [
@@ -111,6 +124,7 @@ CHARS = [
     ("您", "nin", 118), ("请", "qing", 116), ("谢", "xie", 114), ("吗", "ma", 112),
     ("吧", "ba", 110), ("啊", "a", 108), ("哦", "o", 106), ("嗯", "en", 104),
     ("哈", "ha", 102), ("嘿", "hei", 100), ("拼音", "pinyin", 90),
+    ("否", "fou", 900),
 ]
 
 WORDS = [
@@ -142,7 +156,7 @@ WORDS = [
     ("你好", "nihao", 3500), ("早上好", "zaoshanghao", 3400), ("晚上好", "wanshanghao", 3300),
     ("再见", "zaijian", 3200), ("欢迎", "huanying", 3100), ("麻烦", "mafan", 3000),
     ("怎么", "zenme", 2950), ("怎样", "zenyang", 2900), ("为什么", "weishenme", 2850),
-    ("哪里", "nali", 2800), ("哪儿", "nar", 2750), ("多少", "duoshao", 2700),
+    ("哪里", "nali", 2800), ("哪儿", "naer", 2750), ("多少", "duoshao", 2700),
     ("几个", "jige", 2650), ("谁", "shei", 2600), ("非常", "feichang", 2550),
     ("真的", "zhende", 2500), ("不错", "bucuo", 2450), ("好的", "haode", 2400),
     ("不是", "bushi", 2350), ("就是", "jiushi", 2300), ("可能", "keneng", 2250),
@@ -200,20 +214,34 @@ WORDS = [
 
 ASSOC_ZH = [
     ("你", "好", 9000), ("你", "的", 8000), ("你", "们", 7000), ("你", "是", 6500),
+    ("你", "在", 6200), ("你", "会", 5000), ("你", "说", 4800), ("你", "看", 4500),
     ("我", "的", 9000), ("我", "们", 8500), ("我", "是", 8000), ("我", "想", 7000),
-    ("我", "爱", 4000), ("好", "的", 8000), ("好", "吗", 7000), ("好", "了", 6000),
-    ("是", "的", 7000), ("是", "不", 6500), ("不", "是", 8000), ("不", "要", 7000),
-    ("这", "个", 9000), ("这", "是", 7000), ("那", "个", 8500), ("那", "是", 6000),
-    ("什么", "时候", 5000), ("什么", "意思", 4500), ("现在", "的", 4000),
-    ("可以", "吗", 5000), ("谢谢", "你", 6000), ("你好", "吗", 5500),
-    ("中国", "人", 4000), ("输入", "法", 3000), ("拼音", "输入", 2500),
-    ("今天", "天气", 2000), ("天气", "很好", 1800), ("我们", "一起", 3000),
-    ("因为", "所以", 2000), ("如果", "可以", 1800), ("怎么", "样", 4000),
-    ("请", "问", 3500), ("对", "不", 3000), ("没", "有", 6000), ("有", "的", 4000),
-    ("很", "好", 5000), ("真", "的", 4500), ("已", "经", 4000), ("还", "是", 3800),
-    ("就", "是", 4200), ("都", "是", 3600), ("也", "是", 3400), ("会", "的", 3000),
-    ("要", "是", 2800), ("想", "要", 3200), ("知", "道", 5000), ("觉", "得", 4000),
-    ("看", "见", 3000), ("听", "到", 2500), ("说", "话", 2400), ("吃", "饭", 2600),
+    ("我", "爱", 4000), ("我", "在", 6500), ("我", "会", 5600), ("我", "要", 5400),
+    ("好", "的", 8000), ("好", "吗", 7000), ("好", "了", 6000), ("好", "像", 4200),
+    ("是", "的", 7000), ("是", "不", 6500), ("是", "否", 3000), ("是", "啊", 2800),
+    ("不", "是", 8000), ("不", "要", 7000), ("不", "会", 6200), ("不", "能", 5800),
+    ("不", "知道", 5000), ("不", "错", 4500), ("不", "过", 4200), ("不", "行", 4000),
+    ("这", "个", 9000), ("这", "是", 7000), ("这", "样", 6500), ("这", "里", 6000),
+    ("那", "个", 8500), ("那", "是", 6000), ("那", "么", 5500), ("那", "里", 5000),
+    ("什么", "时候", 5000), ("什么", "意思", 4500), ("什么", "地方", 3500),
+    ("现在", "的", 4000), ("现在", "可以", 2800), ("可以", "吗", 5000), ("可以", "了", 3600),
+    ("谢谢", "你", 6000), ("你好", "吗", 5500), ("中国", "人", 4000), ("中国", "的", 3200),
+    ("输入", "法", 3000), ("拼音", "输入", 2500), ("今天", "天气", 2000), ("天气", "很好", 1800),
+    ("我们", "一起", 3000), ("我们", "的", 4500), ("因为", "所以", 2000), ("如果", "可以", 1800),
+    ("怎么", "样", 4000), ("怎么", "办", 3800), ("怎么", "说", 3200), ("为什么", "呢", 2500),
+    ("请", "问", 3500), ("请", "你", 3000), ("对", "不起", 5000), ("对", "的", 3600),
+    ("没", "有", 6000), ("没", "关系", 4500), ("有", "的", 4000), ("有", "没有", 3500),
+    ("很", "好", 5000), ("很", "多", 4200), ("真", "的", 4500), ("已", "经", 4000),
+    ("还", "是", 3800), ("还", "有", 3600), ("就", "是", 4200), ("就", "要", 3000),
+    ("都", "是", 3600), ("也", "是", 3400), ("会", "的", 3000), ("要", "是", 2800),
+    ("想", "要", 3200), ("知", "道", 5000), ("觉", "得", 4000), ("看", "见", 3000),
+    ("听", "到", 2500), ("说", "话", 2400), ("吃", "饭", 2600), ("喝", "水", 2200),
+    ("工作", "的", 2800), ("学习", "的", 2600), ("生活", "中", 2400), ("朋友", "们", 2300),
+    ("公司", "的", 2200), ("学校", "里", 2100), ("老师", "好", 2000), ("学生", "们", 1900),
+    ("时间", "到", 1800), ("问题", "是", 1700), ("方法", "是", 1600), ("开始", "了", 1500),
+    ("需要", "的", 1400), ("喜欢", "的", 1300), ("希望", "你", 1200), ("觉得", "很", 1100),
+    ("知道", "了", 2000), ("出来", "了", 1800), ("起来", "了", 1700), ("回来", "了", 1600),
+    ("打开", "了", 1500), ("完成", "了", 1400), ("成功", "了", 1300), ("失败", "了", 1200),
 ]
 
 EN = [
@@ -390,6 +418,60 @@ ASSOC_JA = [
 ]
 
 
+def load_syllables():
+    text = SYLLABLE_SRC.read_text(encoding="utf-8")
+    return set(re.findall(r'"([a-z]+)"', text))
+
+
+def segment_pinyin(letters, syllables):
+    max_len = max(map(len, syllables))
+    out = []
+    i = 0
+    while i < len(letters):
+        matched = None
+        for length in range(min(max_len, len(letters) - i), 0, -1):
+            piece = letters[i : i + length]
+            if piece in syllables:
+                matched = piece
+                break
+        if matched is None:
+            return None
+        out.append(matched)
+        i += len(matched)
+    return out
+
+
+def derive_chars_from_words(chars, words, syllables):
+    known = {c for c, _, _ in chars}
+    best = {}
+    for word, pinyin, freq in words:
+        parts = segment_pinyin(pinyin, syllables)
+        if parts is None or len(parts) != len(word):
+            continue
+        for ch, py in zip(word, parts):
+            if ch in known:
+                continue
+            old = best.get(ch)
+            if old is None or freq > old[1]:
+                best[ch] = (py, freq)
+    extras = []
+    score = 200
+    for ch, (py, _) in sorted(best.items(), key=lambda item: (-item[1][1], item[1][0], item[0])):
+        extras.append((ch, py, score))
+        score = max(80, score - 1)
+    return extras
+
+
+def derive_assoc_from_words(words):
+    rows = []
+    for word, _, freq in words:
+        if len(word) < 2:
+            continue
+        for i in range(1, len(word)):
+            rows.append((word[:i], word[i:], max(1, freq // 2)))
+    return rows
+
+
 def write_tsv(name, rows):
     path = ROOT / name
     seen = set()
@@ -404,20 +486,23 @@ def write_tsv(name, rows):
 
 
 def main():
-    write_tsv("zh.txt", CHARS + WORDS)
+    syllables = load_syllables()
+    extras = derive_chars_from_words(CHARS, WORDS, syllables)
+    write_tsv("zh.txt", CHARS + extras + WORDS)
     write_tsv("en.txt", EN)
     write_tsv("es.txt", ES)
     write_tsv("de.txt", DE)
     write_tsv("ru.txt", RU)
     write_tsv("ar.txt", AR)
     write_tsv("ja.txt", JA)
-    write_tsv("assoc_zh.txt", ASSOC_ZH)
+    write_tsv("assoc_zh.txt", ASSOC_ZH + derive_assoc_from_words(WORDS))
     write_tsv("assoc_en.txt", ASSOC_EN)
     write_tsv("assoc_es.txt", ASSOC_ES)
     write_tsv("assoc_de.txt", ASSOC_DE)
     write_tsv("assoc_ru.txt", ASSOC_RU)
     write_tsv("assoc_ar.txt", ASSOC_AR)
     write_tsv("assoc_ja.txt", ASSOC_JA)
+    print(f"extra chinese chars: {len(extras)}")
 
 
 if __name__ == "__main__":

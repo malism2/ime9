@@ -92,6 +92,40 @@ class EngineTest {
     }
 
     @Test
+    fun associationAfterWordUsesSuffix() {
+        val hits = engine.associate("你好", chinese = true).map { it.text }
+        assertTrue("expected 吗 after 你好, got $hits", hits.contains("吗"))
+    }
+
+    @Test
+    fun associationAfterPartialWord() {
+        val hits = engine.associate("朋", chinese = true).map { it.text }
+        assertTrue("expected 友 after 朋, got $hits", hits.contains("友"))
+    }
+
+    @Test
+    fun pinyinPrefixKeepsLeadingCharCandidates() {
+        val hits = engine.chineseCandidates("nihao").map { it.text }
+        assertTrue(hits.contains("你好"))
+        assertTrue("expected 你 among nihao candidates, got $hits", hits.contains("你"))
+    }
+
+    @Test
+    fun pinyinRemainingAfterPartialCommit() {
+        assertEquals("hao", engine.pinyin.remaining("nihao", "ni"))
+        assertEquals("426", engine.pinyin.remaining("64426", "ni"))
+        assertEquals("", engine.pinyin.remaining("nihao", "nihao"))
+    }
+
+    @Test
+    fun missingWordCharIsTypable() {
+        val hits = engine.chineseCandidates("peng").map { it.text }
+        assertTrue("expected 朋, got $hits", hits.contains("朋"))
+        val you = engine.chineseCandidates("you").map { it.text }
+        assertTrue("expected 友, got $you", you.contains("友"))
+    }
+
+    @Test
     fun associationEnglishI() {
         val hits = engine.associate("I", chinese = false).map { it.text }
         assertTrue(hits.contains("am"))
